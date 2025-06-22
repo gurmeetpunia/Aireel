@@ -1,26 +1,210 @@
 @import "tailwindcss";
 
+/* --- CSS Variables --- */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #ffffff; /* White background for light mode */
+  --foreground: #111827; /* Dark text for light mode */
+  --card-background: #f9fafb;
+  --border-color: #e5e7eb;
+
+  --primary: #4f46e5; /* Indigo for light mode */
+  --accent: #6366f1;
+  --secondary-text: #6b7280; /* Gray for secondary text */
+  --font-sans: Arial, Helvetica, sans-serif; /* Keep your existing font preference */
+  --font-mono: "IBM Plex Mono", monospace;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+.dark {
+  --background: #1a1b26; /* Dark almost-black for dark mode */
+  --foreground: #fffbe6; /* Off-white for general text */
+  --card-background: #111827;
+  --border-color: #374151;
+
+  --primary: #8b5cf6; /* Vibrant Purple for dark mode */
+  --accent: #a78bfa;
+  --secondary-text: #9ca3af; /* Lighter gray for dark mode */
 }
 
+/* No specific dark mode overrides needed if :root handles it already */
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --background: #1a1b26;
+    --foreground: #fffbe6;
   }
 }
 
+/* --- Base Styles --- */
 body {
-  background: var(--background);
+  background-color: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans);
+  min-height: 100vh;
+  letter-spacing: 0.01em;
+  /* Smooth scrolling for anchor links if you add them later */
+  scroll-behavior: smooth;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* --- Glassmorphism Effect --- */
+.glass {
+  background: rgba(20, 20, 0, 0.7); /* Slightly more opaque yellow tint */
+  /* Stronger, yellower box-shadow for glass elements */
+  box-shadow: 0 4px 32px 0 rgba(255, 224, 102, 0.2),
+    /* Primary yellow glow */ 0 1.5px 8px 0 rgba(255, 249, 196, 0.15); /* Secondary lighter yellow glow */
+  backdrop-filter: blur(8px);
+  border-radius: 1.5rem; /* Matches React component's rounded-3xl */
+  border: 1.5px solid rgba(255, 224, 102, 0.25); /* More visible yellow border */
+}
+
+/* --- Neon Text Effect --- */
+.neon-text {
+  color: var(--primary); /* Base color is primary yellow */
+  text-shadow: 0 0 5px var(--primary),
+    /* Soft inner glow */ 0 0 10px var(--accent),
+    /* Medium glow */ 0 0 20px var(--primary),
+    /* Stronger primary glow */ 0 0 40px var(--orange); /* Wider, warmer outer glow */
+}
+
+/* --- Scanlines Effect --- */
+.scanlines {
+  background-image: repeating-linear-gradient(
+    180deg,
+    transparent,
+    transparent 2px,
+    rgba(255, 224, 102, 0.1) 3px,
+    /* Slightly more visible yellow tint */ transparent 4px
+  );
+  opacity: 0.8; /* Slightly reduce opacity for subtler effect */
+}
+
+/* --- Holographic Gradient Overlay --- */
+.bg-holo-gradient {
+  background: radial-gradient(
+      circle at center,
+      rgba(255, 255, 255, 0.07) 0%,
+      /* Brighter center for more sparkle */ rgba(255, 255, 255, 0) 70%
+    ),
+    linear-gradient(
+      135deg,
+      var(--primary) 0%,
+      var(--accent) 25%,
+      var(--primary) 50%,
+      var(--accent) 75%,
+      var(--primary) 100%
+    );
+  /* Ensure this aligns with the `mix-blend-screen` in the React component */
+}
+
+/* --- Particle Float Animation --- */
+@keyframes float {
+  0% {
+    transform: translateY(0) scale(1) translateX(0); /* Start */
+    opacity: 0.15;
+  }
+  25% {
+    transform: translateY(-10px) scale(1.05) translateX(5px);
+    opacity: 0.25;
+  }
+  50% {
+    transform: translateY(-20px) scale(1.1) translateX(-5px); /* Peak float */
+    opacity: 0.35;
+  }
+  75% {
+    transform: translateY(-10px) scale(1.05) translateX(5px);
+    opacity: 0.25;
+  }
+  100% {
+    transform: translateY(0) scale(1) translateX(0); /* Back to start */
+    opacity: 0.15;
+  }
+}
+.animate-float {
+  animation: float 4s ease-in-out infinite alternate; /* Slower, smoother, and alternates */
+}
+
+/* --- Neon Box Shadows (for buttons, cards, etc.) --- */
+.shadow-neon {
+  box-shadow: 0 0 8px var(--primary), /* Main glow */ 0 0 16px var(--accent); /* Wider, softer glow */
+}
+
+.shadow-neon-lg {
+  box-shadow: 0 0 15px var(--primary),
+    /* Stronger initial glow */ 0 0 30px var(--accent),
+    /* Wider, more diffuse */ 0 0 60px var(--primary); /* Very wide, ambient glow */
+}
+
+/* --- Button Glowing Effect (btn-glow) --- */
+.btn-glow {
+  position: relative;
+  overflow: hidden; /* Crucial to hide the rotating gradient outside */
+  transition: all 0.3s ease;
+  /* Add initial subtle glow for always-on look if desired */
+  box-shadow: 0 0 5px rgba(255, 224, 102, 0.4);
+}
+
+.btn-glow::before {
+  content: "";
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: conic-gradient(
+    from 0deg,
+    transparent 0%,
+    var(--primary) 20%,
+    /* Yellow start */ transparent 40%,
+    var(--orange) 60%,
+    /* Orange highlight */ transparent 80%,
+    var(--primary) 100% /* Yellow end */
+  );
+  transform: rotate(0deg);
+  animation: rotateGlow 3s linear infinite; /* Adjust speed as desired */
+  opacity: 0; /* Hidden by default */
+  transition: opacity 0.3s ease;
+  z-index: 0; /* Below content, above button background */
+}
+
+/* Show glow on hover/focus */
+.btn-glow:hover::before,
+.btn-glow:focus::before {
+  opacity: 1;
+}
+
+/* Inner overlay to make the glow appear only on the border */
+.btn-glow::after {
+  content: "";
+  position: absolute;
+  inset: 2px; /* Adjust this value for thinner/thicker glow border */
+  background: inherit; /* Inherits the button's background color */
+  border-radius: inherit; /* Keeps the button's rounded corners */
+  z-index: 1; /* Sits above the glow but below the content */
+}
+
+/* Ensure button content is on top */
+.btn-glow > * {
+  position: relative;
+  z-index: 2;
+}
+
+@keyframes rotateGlow {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* --- Utility for Text Truncation on Small Screens --- */
+/* This can also be directly in your Tailwind config's @layer utilities */
+@layer utilities {
+  .truncate-mobile {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 7rem; /* Adjust as needed for your smallest screen breakpoints */
+  }
+  @media (min-width: 768px) {
+    .truncate-mobile {
+      max-width: none; /* Disable truncation on medium and larger screens */
+    }
+  }
 }
