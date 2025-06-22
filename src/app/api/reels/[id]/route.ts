@@ -24,7 +24,7 @@ const reels = [
 ];
 
 // GET handler to fetch a single reel if needed (optional)
-export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(request: NextRequest, { params }: any) {
   try {
     const reelId = params.id;
     const reelsData = fs.readFileSync(reelsJsonPath, 'utf-8');
@@ -42,7 +42,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
 }
 
 // DELETE handler to remove a reel
-export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(request: NextRequest, { params }: any) {
   try {
     const reelId = params.id;
     if (!reelId) {
