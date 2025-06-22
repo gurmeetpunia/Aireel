@@ -235,13 +235,12 @@ export default function ReelFeed() {
       
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col h-screen max-h-screen overflow-hidden">
-        {/* Header removed for full reel view */}
-        {/* <Header 
-          onSearch={handleCreateReel}
-          celebrity={celebrity}
-          setCelebrity={setCelebrity}
-          creating={creating}
-        /> */}
+        {/* Error message display */}
+        {error && (
+          <div className="mx-auto my-4 px-6 py-3 bg-red-600 text-white rounded-xl shadow-lg text-center font-semibold max-w-md animate-pulse z-50">
+            {error}
+          </div>
+        )}
         
         {/* Reel Feed */}
         <div className="flex-1 relative overflow-y-auto">
