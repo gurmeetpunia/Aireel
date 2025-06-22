@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { generateCelebrityScript } from '@/utils/cohere';
+import { generateCelebrityScriptCohere } from '@/utils/cohere';
 
 export async function POST(request: Request) {
   try {
@@ -7,7 +7,7 @@ export async function POST(request: Request) {
     if (!celebrity || typeof celebrity !== 'string') {
       return NextResponse.json({ error: 'Celebrity name is required.' }, { status: 400 });
     }
-    const script = await generateCelebrityScript(celebrity);
+    const script = await generateCelebrityScriptCohere(celebrity);
     return NextResponse.json({ script });
   } catch (error) {
     // Log the error for debugging
