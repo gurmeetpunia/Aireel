@@ -1,5 +1,5 @@
 import React, { useRef, useState, useEffect, useCallback } from 'react';
-import { Play, Pause, Heart, User, Clock, Sparkles, RefreshCw, AlertCircle } from 'lucide-react';
+import { Play, Pause, Heart, User, Clock, Sparkles, RefreshCw, AlertCircle, Zap, Eye } from 'lucide-react';
 
 interface ReelCardProps {
   videoUrl: string;
@@ -11,59 +11,51 @@ interface ReelCardProps {
   isMuted?: boolean;
 }
 
-// Particle effect
-const ParticleOverlay: React.FC = () => {
-  const particles = Array.from({ length: 12 }, (_, i) => ({
-    id: i,
-    left: `${Math.random() * 100}%`,
-    top: `${Math.random() * 100}%`,
-    delay: Math.random() * 4,
-    size: 2 + Math.random() * 4,
-    opacity: 0.1 + Math.random() * 0.3,
-    duration: 3 + Math.random() * 2,
-  }));
-
-  return (
-    <div className="absolute inset-0 pointer-events-none overflow-hidden">
-      {particles.map((particle) => (
-        <div
-          key={particle.id}
-          className="absolute rounded-full bg-gradient-to-r from-purple-400 to-blue-400 animate-pulse"
-          style={{
-            left: particle.left,
-            top: particle.top,
-            width: particle.size,
-            height: particle.size,
-            opacity: particle.opacity,
-            animationDelay: `${particle.delay}s`,
-            animationDuration: `${particle.duration}s`,
-          }}
-        />
-      ))}
-    </div>
-  );
-};
-
 const LoadingSpinner: React.FC = () => (
-  <div className="absolute inset-0 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+  <div className="absolute inset-0 flex items-center justify-center bg-black/60 backdrop-blur-xl">
     <div className="relative">
-      <div className="w-12 h-12 border-4 border-purple-500/30 border-t-purple-500 rounded-full animate-spin" />
-      <div className="absolute inset-0 w-12 h-12 border-4 border-transparent border-t-blue-500 rounded-full animate-spin" style={{ animationDirection: 'reverse', animationDuration: '1.5s' }} />
+      {/* Multi-layered spinning rings */}
+      <div className="w-16 h-16 border-4 border-transparent border-t-purple-500 border-r-pink-500 rounded-full animate-spin"></div>
+      <div className="absolute inset-2 w-12 h-12 border-4 border-transparent border-t-blue-500 border-l-purple-500 rounded-full animate-spin" style={{ animationDirection: 'reverse', animationDuration: '1.5s' }}></div>
+      <div className="absolute inset-4 w-8 h-8 border-4 border-transparent border-t-pink-500 border-b-blue-500 rounded-full animate-spin" style={{ animationDuration: '2s' }}></div>
+      
+      {/* Center spark */}
+      <div className="absolute inset-0 flex items-center justify-center">
+        <Sparkles className="w-6 h-6 text-yellow-400 animate-pulse" />
+      </div>
+      
+      {/* Glow effect */}
+      <div className="absolute inset-0 bg-gradient-to-r from-purple-500/20 via-pink-500/20 to-blue-500/20 rounded-full blur-xl animate-pulse"></div>
+    </div>
+    
+    <div className="absolute bottom-20 text-center">
+      <p className="font-semibold text-lg bg-gradient-to-r from-purple-400 via-pink-400 to-blue-400 bg-clip-text text-transparent">
+        ✨ Loading Magic...
+      </p>
     </div>
   </div>
 );
 
 const ErrorState: React.FC<{ onRetry: () => void }> = ({ onRetry }) => (
-  <div className="absolute inset-0 flex items-center justify-center bg-black/80 backdrop-blur-sm">
-    <div className="text-center p-6">
-      <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
-      <p className="text-white text-sm mb-4">Failed to load video</p>
+  <div className="absolute inset-0 flex items-center justify-center bg-black/80 backdrop-blur-xl">
+    <div className="text-center p-8 bg-gradient-to-br from-red-500/10 via-orange-500/10 to-pink-500/10 rounded-3xl border border-red-500/20 backdrop-blur-sm">
+      <div className="relative mb-6">
+        <AlertCircle className="w-16 h-16 text-red-400 mx-auto animate-pulse" />
+        <div className="absolute inset-0 bg-gradient-to-r from-red-500/20 to-orange-500/20 rounded-full blur-lg"></div>
+      </div>
+      
+      <p className="text-white text-lg font-semibold mb-2">Oops! Something went wrong</p>
+      <p className="text-slate-300 text-sm mb-6">Failed to load this masterpiece</p>
+      
       <button
         onClick={onRetry}
-        className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors flex items-center gap-2 mx-auto"
+        className="relative group px-6 py-3 bg-gradient-to-r from-red-600 via-orange-600 to-pink-600 hover:from-red-500 hover:via-orange-500 hover:to-pink-500 text-white rounded-2xl transition-all duration-300 font-semibold shadow-lg hover:shadow-xl hover:scale-105 active:scale-95 focus:outline-none focus:ring-4 focus:ring-red-500/50"
       >
-        <RefreshCw className="w-4 h-4" />
-        Retry
+        <div className="absolute inset-0 bg-gradient-to-r from-red-400/20 via-orange-400/20 to-pink-400/20 rounded-2xl blur opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+        <div className="relative flex items-center gap-2">
+          <RefreshCw className="w-5 h-5 group-hover:rotate-180 transition-transform duration-500" />
+          Try Again
+        </div>
       </button>
     </div>
   </div>
@@ -74,21 +66,32 @@ const PlayPauseButton: React.FC<{
   onPlayPause: () => void;
   showControls: boolean;
 }> = ({ isPlaying, onPlayPause, showControls }) => (
-  <div className={`absolute inset-0 flex items-center justify-center transition-opacity duration-300 ${
-    showControls ? 'opacity-100' : 'opacity-0'
+  <div className={`absolute inset-0 flex items-center justify-center transition-all duration-500 ${
+    showControls ? 'opacity-100 scale-100' : 'opacity-0 scale-95'
   }`}>
     <button
-      className="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-black/60 backdrop-blur-md rounded-full p-4 border-2 border-white/30 transition-all duration-300 hover:bg-black/80 hover:scale-110 active:scale-95 focus:outline-none focus:ring-4 focus:ring-purple-500/50"
+      className="relative group bg-black/40 backdrop-blur-xl rounded-full p-6 border-2 border-white/20 transition-all duration-300 hover:bg-black/60 hover:scale-110 hover:border-purple-500/50 active:scale-95 focus:outline-none focus:ring-4 focus:ring-purple-500/50 shadow-2xl"
       onClick={(e) => {
         e.stopPropagation();
         onPlayPause();
       }}
       aria-label={isPlaying ? "Pause video" : "Play video"}
     >
-      {isPlaying ? (
-        <Pause className="w-8 h-8 text-white" />
-      ) : (
-        <Play className="w-8 h-8 text-white ml-1" />
+      {/* Animated background glow */}
+      <div className="absolute inset-0 bg-gradient-to-r from-purple-500/20 via-pink-500/20 to-blue-500/20 rounded-full blur-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+      
+      {/* Button content */}
+      <div className="relative">
+        {isPlaying ? (
+          <Pause className="w-10 h-10 text-white group-hover:text-purple-300 transition-colors duration-300" />
+        ) : (
+          <Play className="w-10 h-10 text-white group-hover:text-purple-300 transition-colors duration-300 ml-1" />
+        )}
+      </div>
+      
+      {/* Pulse effect when playing */}
+      {isPlaying && (
+        <div className="absolute inset-0 rounded-full border-4 border-purple-500/30 animate-ping"></div>
       )}
     </button>
   </div>
@@ -111,6 +114,7 @@ const ReelCard: React.FC<ReelCardProps> = ({
   const [videoLoading, setVideoLoading] = useState(true);
   const [videoError, setVideoError] = useState(false);
   const [isVideoPlaying, setIsVideoPlaying] = useState(false);
+  const [viewCount] = useState(Math.floor(Math.random() * 10000) + 1000);
 
   useEffect(() => {
     const checkMobile = () => {
@@ -183,6 +187,7 @@ const ReelCard: React.FC<ReelCardProps> = ({
     if (!video) return;
 
     if (isPlaying) {
+      video.currentTime = 0;
       video.play().catch(() => console.warn("Autoplay failed"));
     } else {
       video.pause();
@@ -211,99 +216,115 @@ const ReelCard: React.FC<ReelCardProps> = ({
     return date.toLocaleDateString();
   }, []);
 
+  const formatViews = useCallback((views: number) => {
+    if (views >= 1000000) return `${(views / 1000000).toFixed(1)}M`;
+    if (views >= 1000) return `${(views / 1000).toFixed(1)}K`;
+    return views.toString();
+  }, []);
+
   return (
-    <div className="w-full h-full flex items-center justify-center bg-transparent p-2">
+    <div className="w-full h-full flex items-center justify-center bg-transparent p-3">
       <div
-        className="relative w-full max-w-xs md:w-[360px] h-full max-h-[80vh] md:h-[600px] rounded-2xl overflow-hidden shadow-2xl bg-black group"
+        className="relative w-full max-w-xs md:w-[380px] h-full rounded-3xl overflow-hidden group transition-all duration-500 hover:scale-[1.02] active:scale-[0.98]"
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
       >
+        {/* Enhanced background blur effect */}
         <div
-          className="absolute inset-0 scale-110 blur-2xl opacity-30"
+          className="absolute inset-0 scale-110 blur-3xl opacity-40 transition-opacity duration-500 group-hover:opacity-60"
           style={{ backgroundImage: `url(${thumbnailUrl})`, backgroundSize: 'cover', backgroundPosition: 'center' }}
         />
-        <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/60" />
-        <div className="absolute inset-0 bg-gradient-to-r from-purple-900/10 to-blue-900/10" />
-        <ParticleOverlay />
+        
+        {/* Multiple gradient overlays for depth */}
+        <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-transparent to-black/70" />
+        <div className="absolute inset-0 bg-gradient-to-r from-purple-900/20 via-transparent to-blue-900/20" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
 
-        <video
-          ref={videoRef}
-          className="w-full h-full object-cover cursor-pointer"
-          src={videoUrl}
-          poster={thumbnailUrl}
-          controls={false}
-          loop
-          playsInline
-          muted={isMuted}
-          preload="metadata"
-          onClick={() => {
-            const video = videoRef.current;
-            if (video) {
-              if (isVideoPlaying) {
-                video.pause();
-              } else {
-                video.play().catch(() => console.warn("Autoplay failed"));
+        {/* Main card container with glassmorphism */}
+        <div className="relative w-full h-full bg-black/20 backdrop-blur-sm border border-white/10 rounded-3xl shadow-2xl overflow-hidden">
+          
+          {/* Animated border gradient */}
+          <div className="absolute inset-0 bg-gradient-to-r from-purple-500/30 via-pink-500/30 to-blue-500/30 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 blur-sm"></div>
+          <div className="absolute inset-px bg-black rounded-3xl"></div>
+
+          <video
+            ref={videoRef}
+            className="relative w-full h-full object-cover cursor-pointer rounded-3xl transition-transform duration-300 group-hover:scale-[1.01]"
+            src={videoUrl}
+            poster={thumbnailUrl}
+            controls={false}
+            loop
+            playsInline
+            muted={isMuted}
+            preload="metadata"
+            onClick={() => {
+              const video = videoRef.current;
+              if (video) {
+                if (isVideoPlaying) {
+                  video.pause();
+                } else {
+                  video.play().catch(() => console.warn("Autoplay failed"));
+                }
               }
-            }
-          }}
-        />
+            }}
+          />
 
-        {videoLoading && <LoadingSpinner />}
-        {videoError && <ErrorState onRetry={handleRetry} />}
+          {videoLoading && <LoadingSpinner />}
+          {videoError && <ErrorState onRetry={handleRetry} />}
 
-        <PlayPauseButton
-          isPlaying={isVideoPlaying}
-          showControls={showControls}
-          onPlayPause={() => {
-            const video = videoRef.current;
-            if (video) {
-              if (isVideoPlaying) {
-                video.pause();
-              } else {
-                video.play().catch(() => console.warn("Autoplay failed"));
+          <PlayPauseButton
+            isPlaying={isVideoPlaying}
+            showControls={showControls}
+            onPlayPause={() => {
+              const video = videoRef.current;
+              if (video) {
+                if (isVideoPlaying) {
+                  video.pause();
+                } else {
+                  video.play().catch(() => console.warn("Autoplay failed"));
+                }
               }
-            }
-          }}
-        />
+            }}
+          />
 
-        <div className="absolute top-0 left-0 right-0 p-4 md:p-6 bg-gradient-to-b from-black/60 to-transparent">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gradient-to-r from-purple-600 to-blue-600 rounded-full flex items-center justify-center">
-              <User className="w-5 h-5 text-white" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <h3 className="text-white font-bold text-base truncate">{celebrity}</h3>
-            </div>
-          </div>
-        </div>
-
-        <div className="absolute bottom-0 left-0 right-0 p-4 md:p-6 bg-gradient-to-t from-black/80 to-transparent">
-          <div className="flex justify-between items-end">
-            <div className="flex-1 mr-3">
-              <h4 className="text-white font-semibold text-sm mb-1 line-clamp-2">{title}</h4>
-              <div className="flex items-center gap-2 text-slate-300 text-xs">
-                <Clock className="w-3 h-3" />
-                <span>{formatDate(createdAt)}</span>
+          {/* Enhanced header with celebrity info */}
+          <div className="absolute top-0 left-0 right-0 p-6 bg-gradient-to-b from-black/80 via-black/40 to-transparent">
+            <div className="flex items-center gap-4 group/header">
+              <div className="relative">
+                <div className="w-12 h-12 bg-gradient-to-br from-purple-600 via-pink-600 to-blue-600 rounded-full flex items-center justify-center shadow-lg group-hover/header:shadow-xl transition-all duration-300 group-hover/header:scale-105">
+                  <div className="absolute inset-0 bg-gradient-to-br from-purple-400 via-pink-400 to-blue-400 rounded-full blur opacity-0 group-hover/header:opacity-40 transition-opacity duration-300"></div>
+                  <User className="relative w-6 h-6 text-white" />
+                </div>
+                <div className="absolute -top-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-black animate-pulse"></div>
+              </div>
+              <div className="flex-1 min-w-0">
+                <h3 className="text-white font-bold text-lg truncate bg-gradient-to-r from-white via-purple-100 to-white bg-clip-text group-hover/header:from-purple-300 group-hover/header:via-pink-300 group-hover/header:to-blue-300 transition-all duration-300">
+                  {celebrity}
+                </h3>
+                <div className="flex items-center gap-2 text-slate-300 text-sm">
+                  <Sparkles className="w-3 h-3 text-yellow-400 animate-pulse" />
+                  <span className="font-medium">Verified Creator</span>
+                </div>
               </div>
             </div>
-            <div className="flex flex-col gap-3">
-              <button
-                onClick={handleLike}
-                className={`p-3 rounded-full backdrop-blur-sm transition-all duration-200 hover:scale-110 active:scale-95 focus:outline-none focus:ring-2 focus:ring-red-500/50 ${
-                  liked ? 'bg-red-500/20 border-2 border-red-500' : 'bg-white/10 border-2 border-white/20'
-                }`}
-              >
-                <Heart className={`w-5 h-5 ${liked ? 'text-red-500 fill-current' : 'text-white'}`} />
-              </button>
+          </div>
+
+          {/* Enhanced progress bar */}
+          <div className="absolute bottom-0 left-0 right-0 h-2 bg-white/10 backdrop-blur-sm">
+            <div 
+              className="h-full bg-gradient-to-r from-purple-500 via-pink-500 to-blue-500 transition-all duration-300 shadow-lg relative overflow-hidden" 
+              style={{ width: `${progress}%` }}
+            >
+              <div className="absolute inset-0 bg-gradient-to-r from-white/20 to-transparent animate-pulse"></div>
             </div>
           </div>
-        </div>
 
-        <div className="absolute bottom-0 left-0 right-0 h-1.5 bg-white/20">
-          <div className="h-full bg-gradient-to-r from-purple-500 to-blue-500 transition-all duration-200" style={{ width: `${progress}%` }} />
+          {/* Subtle shine effect */}
+          <div className="absolute inset-0 bg-gradient-to-br from-transparent via-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none rounded-3xl"></div>
+          
+          {/* Outer glow effect */}
+          <div className="absolute -inset-1 bg-gradient-to-r from-purple-500/30 via-pink-500/30 to-blue-500/30 rounded-3xl blur-lg opacity-0 group-hover:opacity-60 transition-opacity duration-500 -z-10"></div>
         </div>
-
-        <div className="absolute inset-0 rounded-2xl shadow-[0_0_50px_rgba(147,51,234,0.3)] pointer-events-none" />
       </div>
     </div>
   );

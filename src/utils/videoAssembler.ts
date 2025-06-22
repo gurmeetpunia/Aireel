@@ -6,7 +6,7 @@ import tmp from 'tmp';
 export async function assembleVideo({ imageUrl, audioUrl, duration = 15 }: { imageUrl: string, audioUrl: string, duration?: number }): Promise<string> {
   return new Promise((resolve, reject) => {
     const output = tmp.tmpNameSync({ postfix: '.mp4' });
-    ffmpeg.setFfmpegPath('ffmpeg'); // Use system ffmpeg
+    
     ffmpeg()
       .addInput(imageUrl)
       .loop(duration)
@@ -19,7 +19,26 @@ export async function assembleVideo({ imageUrl, audioUrl, duration = 15 }: { ima
         '-shortest'
       ])
       .on('end', () => resolve(output))
-      .on('error', (err) => reject(err))
+      .on('error', (err, stdout, stderr) => {
+          console.error('ffmpeg stderr:', stderr);
+          reject(err);
+      })
       .save(output);
+  });
+}
+
+export function getAudioDuration(filePath: string): Promise<number> {
+  return new Promise((resolve, reject) => {
+    ffmpeg.ffprobe(filePath, (err, metadata) => {
+      if (err) {
+        return reject(err);
+      }
+      const duration = metadata.format.duration;
+      if (duration) {
+        resolve(duration);
+      } else {
+        reject(new Error('Could not read audio duration from metadata.'));
+      }
+    });
   });
 }

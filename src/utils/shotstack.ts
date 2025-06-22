@@ -3,27 +3,43 @@ import axios from 'axios';
 const SHOTSTACK_API_KEY = process.env.SHOTSTACK_API_KEY;
 const SHOTSTACK_API_URL = 'https://api.shotstack.io/v1/render';
 
-export async function assembleVideoShotstack({ imageUrl, audioUrl, duration = 10 }: { imageUrl: string, audioUrl: string, duration?: number }) {
+export async function assembleVideoShotstack({ 
+  imageUrls, 
+  audioUrl, 
+  duration = 15 
+}: { 
+  imageUrls: string[], 
+  audioUrl: string, 
+  duration?: number 
+}) {
   if (!SHOTSTACK_API_KEY) throw new Error('Missing Shotstack API key');
+
+  const numImages = imageUrls.length;
+  if (numImages === 0) throw new Error('No images provided for video assembly.');
+
+  const clipDuration = duration / numImages;
+
+  const imageClips = imageUrls.map((url, index) => {
+    return {
+      asset: {
+        type: 'image',
+        src: url,
+      },
+      start: index * clipDuration,
+      length: clipDuration,
+      transition: {
+        in: 'fade',
+        out: 'fade',
+      },
+      effect: 'zoomIn',
+    };
+  });
 
   const timeline = {
     background: '#000000',
     tracks: [
       {
-        clips: [
-          {
-            asset: {
-              type: 'image',
-              src: imageUrl,
-            },
-            start: 0,
-            length: duration,
-            transition: {
-              in: 'fade',
-              out: 'fade',
-            },
-          },
-        ],
+        clips: imageClips,
       },
       {
         clips: [

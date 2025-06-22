@@ -53,8 +53,8 @@ export async function fetchCelebrityImage(celebrity: string): Promise<string | n
   const imageRes = await axios.get(imageUrl, { params: imageParams });
   const pages = imageRes.data.query?.pages;
   if (!pages) return null;
-  const page = Object.values(pages)[0];
-  if (page && page.thumbnail && page.thumbnail.source) {
+  const page: any = Object.values(pages)[0];
+  if (page?.thumbnail?.source) {
     return page.thumbnail.source;
   }
   return null;

@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { generateCelebrityScriptCohere } from '@/utils/cohere';
 import { generateSpeechElevenLabs } from '@/utils/elevenlabs';
 import { fetchCelebrityImage } from '@/utils/unsplash';
+import { getAudioDuration } from '@/utils/videoAssembler';
 import fs from 'fs';
 import tmp from 'tmp';
 import axios from 'axios';
@@ -25,15 +26,20 @@ export async function POST(request: Request) {
     fs.writeFileSync(audioTmp.name, audioBuffer);
     const audioPath = audioTmp.name;
 
+    // 2.5 Get audio duration
+    const audioDuration = await getAudioDuration(audioPath);
+
     // 3. Fetch image
     const imageUrl = await fetchCelebrityImage(celebrity);
-    if (!imageUrl) return NextResponse.json({ error: 'No image found.' }, { status: 404 });
+    if (!imageUrl) {
+      return NextResponse.json({ error: 'No image found for the celebrity.' }, { status: 404 });
+    }
 
     // 4. Assemble video using local API
     const assembleUrl = process.env.ASSEMBLE_API_URL || 'http://localhost:3000/api/reels/assemble';
     const assembleRes = await axios.post(
       assembleUrl,
-      { imageUrl, audioUrl: audioPath, duration: 15 },
+      { imageUrl, audioUrl: audioPath, duration: audioDuration },
       { responseType: 'json' }
     );
     const { videoUrl, id } = assembleRes.data;

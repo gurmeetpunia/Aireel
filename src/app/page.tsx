@@ -4,7 +4,6 @@ import React, { useEffect, useState, useCallback, useRef } from 'react';
 import ReelCard from '@/components/ReelCard';
 import { motion, AnimatePresence } from 'framer-motion';
 import Sidebar from '@/components/Sidebar';
-import Header from '@/components/Header';
 import { ChevronUp, ChevronDown, Menu } from 'lucide-react';
 
 interface Reel {
@@ -20,11 +19,12 @@ export default function ReelFeed() {
   const [reels, setReels] = useState<Reel[]>([]);
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
+  const [generatingCelebrity, setGeneratingCelebrity] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [celebrity, setCelebrity] = useState('');
   const [currentIndex, setCurrentIndex] = useState(0);
   const [playingIndex, setPlayingIndex] = useState(0);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const reelRefs = useRef<(HTMLDivElement | null)[]>([]);
 
@@ -51,6 +51,7 @@ export default function ReelFeed() {
     e.preventDefault();
     if (!celebrity.trim()) return;
     setCreating(true);
+    setGeneratingCelebrity(celebrity);
     setError(null);
     try {
       const res = await fetch('/api/reels/generate', {
@@ -59,12 +60,15 @@ export default function ReelFeed() {
         body: JSON.stringify({ celebrity }),
       });
       if (!res.ok) throw new Error((await res.json()).error || 'Failed to generate reel');
-      setCelebrity('');
-      await fetchReels();
+      
+      // Reload the page to get the latest state
+      window.location.reload();
+
     } catch (err: any) {
       setError(err.message || 'Failed to generate reel');
     } finally {
       setCreating(false);
+      setGeneratingCelebrity(null);
     }
   }
 
@@ -110,21 +114,19 @@ export default function ReelFeed() {
       const observer = new window.IntersectionObserver(
         (entries) => {
           entries.forEach(entry => {
-            if (entry.isIntersecting && entry.intersectionRatio > 0.5) {
+            if (entry.isIntersecting) {
               // This reel is now in view
               setCurrentIndex(idx);
               setPlayingIndex(idx); // Auto-play this reel
-            } else if (entry.intersectionRatio < 0.3) {
+            } else {
               // This reel is out of view, pause it
-              if (playingIndex === idx) {
-                setPlayingIndex(-1);
-              }
+              // No need to check playingIndex, just pause if not intersecting
+              setPlayingIndex(prev => prev === idx ? -1 : prev);
             }
           });
         },
         { 
-          threshold: [0.3, 0.5, 0.7],
-          rootMargin: '-10% 0px -10% 0px'
+          threshold: 0.6
         }
       );
       
@@ -135,7 +137,7 @@ export default function ReelFeed() {
     return () => {
       observers.forEach(o => o.disconnect());
     };
-  }, [reels, playingIndex]);
+  }, [reels]);
 
   // Auto-play the first reel when page loads
   useEffect(() => {
@@ -163,6 +165,12 @@ export default function ReelFeed() {
   // Handle keyboard navigation
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      // Ignore key events if the target is an input, textarea, or select element
+      const target = e.target as HTMLElement;
+      if (['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName)) {
+        return;
+      }
+
       if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') {
         e.preventDefault();
         const newIndex = Math.max(currentIndex - 1, 0);
@@ -205,6 +213,11 @@ export default function ReelFeed() {
               onDelete={handleDeleteReel}
               selectedReelId={reels[currentIndex]?.id}
               loading={loading}
+              generatingCelebrity={generatingCelebrity}
+              onSearch={handleCreateReel}
+              celebrity={celebrity}
+              setCelebrity={setCelebrity}
+              creating={creating}
             />
           </motion.div>
         )}
@@ -222,18 +235,16 @@ export default function ReelFeed() {
       
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col h-screen max-h-screen overflow-hidden">
-        <Header 
+        {/* Header removed for full reel view */}
+        {/* <Header 
           onSearch={handleCreateReel}
           celebrity={celebrity}
           setCelebrity={setCelebrity}
           creating={creating}
-        />
+        /> */}
         
         {/* Reel Feed */}
-        <div 
-          className="relative overflow-y-auto"
-          style={{ height: 'calc(100vh - 4.5rem)', paddingBottom: '3.5rem' }}
-        >
+        <div className="flex-1 relative overflow-y-auto">
           {loading ? (
             <div className="flex items-center justify-center h-full">
               <div className="text-center">
@@ -252,42 +263,52 @@ export default function ReelFeed() {
               </div>
             </div>
           ) : (
-            <div 
-              ref={containerRef}
-              className="h-full overflow-y-auto scroll-smooth snap-y snap-mandatory"
-              style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' } as any}
-            >
-              <div className="flex flex-col items-center w-full h-full">
-                {reels.map((reel, idx) => (
-                  <div
-                    key={reel.id}
-                    ref={el => { reelRefs.current[idx] = el; }}
-                    className="w-full h-full flex justify-center items-center snap-start snap-always"
-                  >
-                    <ReelCard
-                      videoUrl={reel.videoUrl}
-                      thumbnailUrl={reel.thumbnailUrl}
-                      title={reel.title}
-                      celebrity={reel.celebrity}
-                      createdAt={reel.createdAt}
-                      isPlaying={playingIndex === idx}
-                      isMuted={false}
-                    />
-                  </div>
-                ))}
+            <>
+              <div 
+                ref={containerRef}
+                className="h-full overflow-y-auto scroll-smooth snap-y snap-mandatory"
+                style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' } as any}
+              >
+                <div className="flex flex-col items-center w-full h-full">
+                  {reels.map((reel, idx) => (
+                    <div
+                      key={reel.id}
+                      ref={el => { reelRefs.current[idx] = el; }}
+                      className="w-full min-h-screen flex justify-center items-center snap-start snap-always"
+                    >
+                      <ReelCard
+                        videoUrl={reel.videoUrl}
+                        thumbnailUrl={reel.thumbnailUrl}
+                        title={reel.title}
+                        celebrity={reel.celebrity}
+                        createdAt={reel.createdAt}
+                        isPlaying={playingIndex === idx}
+                        isMuted={false}
+                      />
+                    </div>
+                  ))}
+                </div>
               </div>
-            </div>
-          )}
-
-          {/* Scroll Indicator */}
-          {reels.length > 1 && (
-            <div className="absolute right-4 top-1/2 transform -translate-y-1/2 flex flex-col items-center gap-2 bg-black/50 backdrop-blur-sm rounded-full p-2">
-              <ChevronUp className="w-5 h-5 text-white/50" />
-              <div className="text-white text-xs font-bold">{currentIndex + 1}</div>
-              <div className="w-px h-8 bg-white/20"></div>
-              <div className="text-white text-xs font-bold">{reels.length}</div>
-              <ChevronDown className="w-5 h-5 text-white/50" />
-            </div>
+              
+              {/* Scroll Indicators */}
+              <div className="absolute right-4 top-1/2 -translate-y-1/2 flex flex-col items-center gap-2">
+                <button 
+                  onClick={() => scrollToReel(Math.max(currentIndex - 1, 0))}
+                  disabled={currentIndex === 0}
+                  className="p-2 rounded-full bg-black/30 hover:bg-black/60 backdrop-blur-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <ChevronUp className="w-5 h-5 text-white" />
+                </button>
+                <div className="h-20 w-px bg-white/20" />
+                <button 
+                  onClick={() => scrollToReel(Math.min(currentIndex + 1, reels.length - 1))}
+                  disabled={currentIndex === reels.length - 1}
+                  className="p-2 rounded-full bg-black/30 hover:bg-black/60 backdrop-blur-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <ChevronDown className="w-5 h-5 text-white" />
+                </button>
+              </div>
+            </>
           )}
         </div>
       </div>
