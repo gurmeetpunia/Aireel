@@ -1,6 +1,3 @@
-import fs from 'fs';
-import path from 'path';
-
 export async function generateSpeechElevenLabs(text: string, voiceId = 'cgSgspJ2msm6clMCkdW9', modelId = 'eleven_monolingual_v1'): Promise<Buffer> {
   const apiKey = process.env.ELEVENLABS_API_KEY;
   if (!apiKey) throw new Error('Missing ElevenLabs API key');

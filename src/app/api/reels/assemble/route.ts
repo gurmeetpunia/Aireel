@@ -11,12 +11,10 @@ export async function POST(request: Request) {
     if (!imageUrl || !audioUrl) {
       return NextResponse.json({ error: 'imageUrl and audioUrl are required.' }, { status: 400 });
     }
-
     // Download image to temp file
     const imageTmp = tmp.fileSync({ postfix: '.jpg' });
     const imageResp = await axios.get(imageUrl, { responseType: 'arraybuffer' });
     fs.writeFileSync(imageTmp.name, imageResp.data);
-
     // Handle audio: local file path or remote URL
     let audioPath;
     if (typeof audioUrl === 'string' && (audioUrl.startsWith('http://') || audioUrl.startsWith('https://'))) {
@@ -30,18 +28,14 @@ export async function POST(request: Request) {
       audioPath = audioUrl;
       console.log('Audio file size:', fs.statSync(audioPath).size);
     }
-
     const videoPath = await assembleVideo({ imageUrl: imageTmp.name, audioUrl: audioPath, duration });
     const videoBuffer = fs.readFileSync(videoPath);
-
     // Upload to Supabase Storage
     const uploadResult = await uploadVideoToSupabase(videoBuffer);
-
     // Clean up temp files
     fs.unlinkSync(videoPath);
     imageTmp.removeCallback();
     // Do not remove audioPath if it's the original file (let the caller clean up)
-
     return NextResponse.json({
       videoUrl: uploadResult.publicUrl,
       filePath: uploadResult.filePath,

@@ -1,5 +1,5 @@
 import React, { useRef, useState, useEffect, useCallback } from 'react';
-import { Play, Pause, Heart, User, Clock, Sparkles, RefreshCw, AlertCircle, Zap, Eye } from 'lucide-react';
+import { Play, Pause, Heart, User, RefreshCw } from 'lucide-react';
 
 interface ReelCardProps {
   videoUrl: string;
@@ -19,10 +19,6 @@ const LoadingSpinner: React.FC = () => (
       <div className="absolute inset-2 w-12 h-12 border-4 border-transparent border-t-blue-500 border-l-purple-500 rounded-full animate-spin" style={{ animationDirection: 'reverse', animationDuration: '1.5s' }}></div>
       <div className="absolute inset-4 w-8 h-8 border-4 border-transparent border-t-pink-500 border-b-blue-500 rounded-full animate-spin" style={{ animationDuration: '2s' }}></div>
       
-      {/* Center spark */}
-      <div className="absolute inset-0 flex items-center justify-center">
-        <Sparkles className="w-6 h-6 text-yellow-400 animate-pulse" />
-      </div>
       
       {/* Glow effect */}
       <div className="absolute inset-0 bg-gradient-to-r from-purple-500/20 via-pink-500/20 to-blue-500/20 rounded-full blur-xl animate-pulse"></div>
@@ -39,19 +35,12 @@ const LoadingSpinner: React.FC = () => (
 const ErrorState: React.FC<{ onRetry: () => void }> = ({ onRetry }) => (
   <div className="absolute inset-0 flex items-center justify-center bg-black/80 backdrop-blur-xl">
     <div className="text-center p-8 bg-gradient-to-br from-red-500/10 via-orange-500/10 to-pink-500/10 rounded-3xl border border-red-500/20 backdrop-blur-sm">
-      <div className="relative mb-6">
-        <AlertCircle className="w-16 h-16 text-red-400 mx-auto animate-pulse" />
-        <div className="absolute inset-0 bg-gradient-to-r from-red-500/20 to-orange-500/20 rounded-full blur-lg"></div>
-      </div>
-      
       <p className="text-white text-lg font-semibold mb-2">Oops! Something went wrong</p>
       <p className="text-slate-300 text-sm mb-6">Failed to load this masterpiece</p>
-      
       <button
         onClick={onRetry}
         className="relative group px-6 py-3 bg-gradient-to-r from-red-600 via-orange-600 to-pink-600 hover:from-red-500 hover:via-orange-500 hover:to-pink-500 text-white rounded-2xl transition-all duration-300 font-semibold shadow-lg hover:shadow-xl hover:scale-105 active:scale-95 focus:outline-none focus:ring-4 focus:ring-red-500/50"
       >
-        <div className="absolute inset-0 bg-gradient-to-r from-red-400/20 via-orange-400/20 to-pink-400/20 rounded-2xl blur opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
         <div className="relative flex items-center gap-2">
           <RefreshCw className="w-5 h-5 group-hover:rotate-180 transition-transform duration-500" />
           Try Again
@@ -70,7 +59,7 @@ const PlayPauseButton: React.FC<{
     showControls ? 'opacity-100 scale-100' : 'opacity-0 scale-95'
   }`}>
     <button
-      className="relative group bg-black/40 backdrop-blur-xl rounded-full p-6 border-2 border-white/20 transition-all duration-300 hover:bg-black/60 hover:scale-110 hover:border-purple-500/50 active:scale-95 focus:outline-none focus:ring-4 focus:ring-purple-500/50 shadow-2xl"
+      className="relative group bg-black/40 backdrop-blur-xl rounded-full p-4 border-2 border-[var(--rose-gold)] transition-all duration-300 hover:bg-black/60 hover:scale-110 hover:border-[var(--rose-gold)] active:scale-95 focus:outline-none focus:ring-4 focus:ring-[var(--rose-gold)] shadow-2xl"
       onClick={(e) => {
         e.stopPropagation();
         onPlayPause();
@@ -78,20 +67,20 @@ const PlayPauseButton: React.FC<{
       aria-label={isPlaying ? "Pause video" : "Play video"}
     >
       {/* Animated background glow */}
-      <div className="absolute inset-0 bg-gradient-to-r from-purple-500/20 via-pink-500/20 to-blue-500/20 rounded-full blur-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+      <div className="absolute inset-0 bg-gradient-to-r from-[#e8b4a0]/30 via-[#f4d2c7]/30 to-[#e8b4a0]/30 rounded-full blur-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
       
       {/* Button content */}
       <div className="relative">
         {isPlaying ? (
-          <Pause className="w-10 h-10 text-white group-hover:text-purple-300 transition-colors duration-300" />
+          <Pause className="w-7 h-7" style={{ color: '#e8b4a0' }} />
         ) : (
-          <Play className="w-10 h-10 text-white group-hover:text-purple-300 transition-colors duration-300 ml-1" />
+          <Play className="w-7 h-7" style={{ color: '#e8b4a0', marginLeft: 2 }} />
         )}
       </div>
       
       {/* Pulse effect when playing */}
       {isPlaying && (
-        <div className="absolute inset-0 rounded-full border-4 border-purple-500/30 animate-ping"></div>
+        <div className="absolute inset-0 rounded-full border-2 border-[#e8b4a0]/30 animate-ping"></div>
       )}
     </button>
   </div>
@@ -229,6 +218,22 @@ const ReelCard: React.FC<ReelCardProps> = ({
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
       >
+        {/* Like button */}
+        <button
+          onClick={handleLike}
+          className="absolute top-5 right-5 z-20 bg-white/80 rounded-full p-3 shadow-lg hover:scale-110 active:scale-95 transition-all"
+          style={{ border: liked ? '2px solid #e8b4a0' : '2px solid #eee' }}
+          aria-label={liked ? 'Unlike' : 'Like'}
+        >
+          <Heart
+            size={28}
+            style={{
+              color: liked ? '#e8b4a0' : '#bbb',
+              fill: liked ? '#e8b4a0' : 'none',
+              transition: 'all 0.2s',
+            }}
+          />
+        </button>
         {/* Enhanced background blur effect */}
         <div
           className="absolute inset-0 scale-110 blur-3xl opacity-40 transition-opacity duration-500 group-hover:opacity-60"
@@ -291,31 +296,26 @@ const ReelCard: React.FC<ReelCardProps> = ({
           <div className="absolute top-0 left-0 right-0 p-6 bg-gradient-to-b from-black/80 via-black/40 to-transparent">
             <div className="flex items-center gap-4 group/header">
               <div className="relative">
-                <div className="w-12 h-12 bg-gradient-to-br from-purple-600 via-pink-600 to-blue-600 rounded-full flex items-center justify-center shadow-lg group-hover/header:shadow-xl transition-all duration-300 group-hover/header:scale-105">
-                  <div className="absolute inset-0 bg-gradient-to-br from-purple-400 via-pink-400 to-blue-400 rounded-full blur opacity-0 group-hover/header:opacity-40 transition-opacity duration-300"></div>
-                  <User className="relative w-6 h-6 text-white" />
+                <div className="w-12 h-12 bg-gradient-to-br from-[#e8b4a0] via-[#f4d2c7] to-[#e8b4a0] rounded-full flex items-center justify-center shadow-lg group-hover/header:shadow-xl transition-all duration-300 group-hover/header:scale-105">
+                  <div className="absolute inset-0 bg-gradient-to-br from-[#e8b4a0] via-[#f4d2c7] to-[#e8b4a0] rounded-full blur opacity-0 group-hover/header:opacity-40 transition-opacity duration-300"></div>
+                  <User className="relative w-6 h-6" style={{ color: '#e8b4a0' }} />
                 </div>
-                <div className="absolute -top-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-black animate-pulse"></div>
               </div>
               <div className="flex-1 min-w-0">
                 <h3 className="text-white font-bold text-lg truncate bg-gradient-to-r from-white via-purple-100 to-white bg-clip-text group-hover/header:from-purple-300 group-hover/header:via-pink-300 group-hover/header:to-blue-300 transition-all duration-300">
                   {celebrity}
                 </h3>
-                <div className="flex items-center gap-2 text-slate-300 text-sm">
-                  <Sparkles className="w-3 h-3 text-yellow-400 animate-pulse" />
-                  <span className="font-medium">Verified Creator</span>
-                </div>
               </div>
             </div>
           </div>
 
           {/* Enhanced progress bar */}
-          <div className="absolute bottom-0 left-0 right-0 h-2 bg-white/10 backdrop-blur-sm">
+          <div className="absolute bottom-0 left-0 right-0 h-2 bg-[#e8b4a0]/10 backdrop-blur-sm">
             <div 
-              className="h-full bg-gradient-to-r from-purple-500 via-pink-500 to-blue-500 transition-all duration-300 shadow-lg relative overflow-hidden" 
+              className="h-full bg-gradient-to-r from-[#e8b4a0] via-[#f4d2c7] to-[#e8b4a0] transition-all duration-300 shadow-lg relative overflow-hidden" 
               style={{ width: `${progress}%` }}
             >
-              <div className="absolute inset-0 bg-gradient-to-r from-white/20 to-transparent animate-pulse"></div>
+              <div className="absolute inset-0 bg-gradient-to-r from-white/20 to-[#e8b4a0]/30 animate-pulse"></div>
             </div>
           </div>
 

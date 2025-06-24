@@ -16,25 +16,20 @@ export async function POST(request: Request) {
     if (!celebrity || typeof celebrity !== 'string') {
       return NextResponse.json({ error: 'Celebrity name is required.' }, { status: 400 });
     }
-
     // 1. Generate script
     const script = await generateCelebrityScriptCohere(celebrity);
-
     // 2. Generate audio
     const audioBuffer = await generateSpeechElevenLabs(script);
     const audioTmp = tmp.fileSync({ postfix: '.mp3' });
     fs.writeFileSync(audioTmp.name, audioBuffer);
     const audioPath = audioTmp.name;
-
     // 2.5 Get audio duration
     const audioDuration = await getAudioDuration(audioPath);
-
     // 3. Fetch image
     const imageUrl = await fetchCelebrityImage(celebrity);
     if (!imageUrl) {
       return NextResponse.json({ error: 'No image found for the celebrity.' }, { status: 404 });
     }
-
     // 4. Assemble video using local API
     const assembleUrl = process.env.ASSEMBLE_API_URL || 'http://localhost:3000/api/reels/assemble';
     const assembleRes = await axios.post(
@@ -43,10 +38,8 @@ export async function POST(request: Request) {
       { responseType: 'json' }
     );
     const { videoUrl, id } = assembleRes.data;
-
     // Clean up temp audio file
     audioTmp.removeCallback();
-
     // 5. Save metadata to reels.json
     const reel = {
       id,
@@ -63,7 +56,6 @@ export async function POST(request: Request) {
     } catch {}
     reels.unshift(reel); // add to start
     fs.writeFileSync(reelsJsonPath, JSON.stringify(reels, null, 2));
-
     return NextResponse.json(reel);
   } catch (error) {
     console.error('AI Reel Generation Error:', error);

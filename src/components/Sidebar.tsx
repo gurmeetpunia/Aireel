@@ -11,10 +11,6 @@ interface SidebarProps {
   selectedReelId?: string;
   loading: boolean;
   generatingCelebrity: string | null;
-  onSearch: (e: React.FormEvent) => void;
-  celebrity: string;
-  setCelebrity: (v: string) => void;
-  creating: boolean;
 }
 
 const Sidebar: React.FC<SidebarProps> = ({ 
@@ -26,13 +22,8 @@ const Sidebar: React.FC<SidebarProps> = ({
   selectedReelId,
   loading,
   generatingCelebrity,
-  onSearch,
-  celebrity,
-  setCelebrity,
-  creating
 }) => {
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
-  const [mobileOpen, setMobileOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const sidebarRef = useRef<HTMLDivElement>(null);
 
@@ -41,248 +32,480 @@ const Sidebar: React.FC<SidebarProps> = ({
       if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
         setOpenMenuId(null);
       }
-      if (sidebarRef.current && !sidebarRef.current.contains(event.target as Node)) {
-        setMobileOpen(false);
-      }
+      // Remove the sidebar auto-close on outside click for better UX
     }
     
-    if (openMenuId || mobileOpen) {
+    if (openMenuId) {
       document.addEventListener('mousedown', handleClickOutside);
     }
     
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, [openMenuId, mobileOpen]);
+  }, [openMenuId]);
 
-  // Close sidebar when selecting a reel on mobile
-  const handleMobileSelect = (id: string) => {
-    onSelect(id);
-    setMobileOpen(false);
+  // Handle sidebar toggle
+  const handleToggle = () => {
+    onToggle();
   };
 
   return (
     <>
-      {/* Enhanced Mobile Menu Button */}
-      <button
-        className="md:hidden fixed top-4 left-4 z-[100] group overflow-hidden"
-        aria-label={mobileOpen ? 'Close sidebar' : 'Open sidebar'}
-        onClick={() => setMobileOpen(!mobileOpen)}
-      >
-        {/* Animated background gradient */}
-        <div className="absolute inset-0 bg-gradient-to-br from-purple-600 via-pink-600 to-blue-600 rounded-2xl transition-all duration-300 group-hover:scale-110"></div>
-        <div className="absolute inset-0 bg-gradient-to-br from-purple-400 via-pink-400 to-blue-400 rounded-2xl blur opacity-0 group-hover:opacity-50 transition-opacity duration-300"></div>
-        
-        <div className="relative bg-gradient-to-br from-purple-600 via-pink-600 to-blue-600 hover:from-purple-700 hover:via-pink-700 hover:to-blue-700 text-white rounded-2xl p-3 shadow-2xl focus:outline-none focus:ring-4 focus:ring-purple-300/50 transition-all duration-300 transform group-hover:scale-105 active:scale-95">
-          <div className="relative z-10">
-            {mobileOpen ? <X size={24} /> : <Menu size={24} />}
-          </div>
-        </div>
-      </button>
+      {/* Improved backdrop overlay */}
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.3 }}
+            onClick={handleToggle}
+            style={{
+              position: 'fixed',
+              inset: 0,
+              background: 'rgba(0, 0, 0, 0.5)',
+              zIndex: 40,
+              backdropFilter: 'blur(4px)',
+            }}
+          />
+        )}
+      </AnimatePresence>
 
-      {/* Enhanced Mobile Overlay */}
-      <div
-        className={`fixed inset-0 bg-gradient-to-br from-black/60 via-purple-900/20 to-black/60 backdrop-blur-md z-40 transition-all duration-500 md:hidden ${
-          mobileOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
-        }`}
-        onClick={() => setMobileOpen(false)}
-      />
-
-      {/* Enhanced Sidebar */}
-      <aside
+      <motion.aside
         ref={sidebarRef}
-        className={`z-50 fixed md:relative top-0 left-0 h-full w-full max-w-sm md:w-72 transition-all duration-500 ${
-          mobileOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
-        } ${isOpen ? 'md:translate-x-0' : 'md:-translate-x-full'}`}
+        initial={false}
+        animate={{
+          x: isOpen ? 0 : 380,
+          opacity: isOpen ? 1 : 0,
+        }}
+        transition={{
+          type: "spring",
+          stiffness: 300,
+          damping: 30,
+          duration: 0.4
+        }}
+        style={{
+          position: 'fixed',
+          top: 72,
+          right: 0,
+          width: '90vw',
+          maxWidth: '380px',
+          height: `calc(100vh - 72px)`,
+          minWidth: '280px',
+          background: 'linear-gradient(135deg, rgba(232,180,160,0.95), rgba(244,210,199,0.90), rgba(232,180,160,0.95))',
+          backdropFilter: 'blur(24px)',
+          borderTopLeftRadius: '32px',
+          borderBottomLeftRadius: '32px',
+          borderTopRightRadius: '0',
+          borderBottomRightRadius: '0',
+          boxShadow: '0 8px 32px 0 rgba(232,180,160,0.2)',
+          border: '1.5px solid var(--rose-gold-light)',
+          color: 'var(--dark)',
+          zIndex: 50,
+          overflow: 'hidden',
+        }}
       >
-        {/* Sidebar background with glassmorphism */}
-        <div className="absolute inset-0 bg-gradient-to-br from-[var(--card-background)]/95 via-[var(--card-background)]/90 to-[var(--card-background)]/95 backdrop-blur-xl"></div>
-        <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 via-transparent to-blue-500/5"></div>
-        <div className="absolute right-0 top-0 bottom-0 w-px bg-gradient-to-b from-transparent via-purple-500/30 to-transparent"></div>
-        
-        <div className="relative h-full flex flex-col pt-6">
-          {/* Search Form moved from Header */}
-          <div className="px-6 mb-4">
-            <form onSubmit={onSearch} className="relative group">
-              <div className="absolute inset-0 bg-gradient-to-r from-purple-500/20 via-pink-500/20 to-blue-500/20 rounded-2xl blur-lg opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-              <div className="relative bg-[var(--background)]/80 backdrop-blur-sm border border-[var(--border-color)]/50 rounded-2xl overflow-hidden shadow-lg group-hover:shadow-2xl transition-all duration-300">
-                {!creating ? (
-                  <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-[var(--secondary-text)] w-6 h-6 group-hover:text-[var(--primary)] transition-colors duration-300" />
-                ) : (
-                  <div className="absolute left-4 top-1/2 transform -translate-y-1/2 w-6 h-6">
-                    <div className="w-6 h-6 border-3 border-gradient-to-r from-purple-500 via-pink-500 to-blue-500 border-t-transparent rounded-full animate-spin"></div>
-                  </div>
-                )}
-                <input
-                  type="text"
-                  className="w-full pl-14 pr-6 py-4 bg-transparent text-[var(--foreground)] placeholder-[var(--secondary-text)] focus:outline-none focus:placeholder-[var(--primary)] transition-all duration-300 text-lg font-medium"
-                  placeholder={creating ? "✨ Crafting your viral masterpiece..." : "🔥 Enter celebrity name to create magic..."}
-                  value={celebrity}
-                  onChange={(e) => setCelebrity(e.target.value)}
-                  disabled={creating}
-                />
-                <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-purple-500 via-pink-500 to-blue-500 opacity-0 group-hover:opacity-20 transition-opacity duration-300 pointer-events-none"></div>
+        {/* Close button */}
+        <button
+          onClick={handleToggle}
+          style={{
+            position: 'absolute',
+            top: 18,
+            right: 18,
+            zIndex: 100,
+            background: 'rgba(255,255,255,0.9)',
+            color: 'var(--dark)',
+            border: 'none',
+            borderRadius: 12,
+            padding: 8,
+            boxShadow: '0 2px 8px 0 rgba(0,0,0,0.1)',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            transition: 'all 0.2s ease',
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = 'rgba(232,180,160,0.2)';
+            e.currentTarget.style.transform = 'scale(1.05)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = 'rgba(255,255,255,0.9)';
+            e.currentTarget.style.transform = 'scale(1)';
+          }}
+          aria-label="Close sidebar"
+        >
+          <X size={20} />
+        </button>
+
+        {/* Sidebar content */}
+        <div style={{ 
+          height: '100%', 
+          display: 'flex', 
+          flexDirection: 'column', 
+          paddingTop: 24,
+          position: 'relative',
+          zIndex: 10
+        }}>
+          {/* Header */}
+          <div style={{ 
+            display: 'flex', 
+            justifyContent: 'space-between', 
+            alignItems: 'center', 
+            padding: '0 24px', 
+            marginBottom: 24 
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <div style={{ 
+                padding: 8, 
+                background: 'rgba(255,255,255,0.8)', 
+                borderRadius: 12, 
+                boxShadow: '0 2px 8px 0 rgba(0,0,0,0.1)' 
+              }}>
+                <Sparkles style={{ 
+                  width: 18, 
+                  height: 18, 
+                  color: 'var(--rose-gold-dark)' 
+                }} />
               </div>
-            </form>
-          </div>
-          {/* Enhanced Header */}
-          <div className="flex justify-between items-center px-6 mb-6">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-gradient-to-br from-purple-600 via-pink-600 to-blue-600 rounded-xl shadow-lg">
-                <Sparkles className="w-5 h-5 text-white animate-pulse" />
-              </div>
-              <h2 className="text-xl font-black bg-gradient-to-r from-purple-600 via-pink-600 to-blue-600 bg-clip-text text-transparent">
+              <h2 style={{ 
+                fontSize: 20, 
+                fontWeight: 700, 
+                color: 'var(--dark)',
+                margin: 0
+              }}>
                 Your Reels
               </h2>
             </div>
-            <button 
-              onClick={onToggle} 
-              className="hidden md:block p-2 rounded-xl hover:bg-gradient-to-br hover:from-purple-500/20 hover:to-pink-500/20 transition-all duration-300 group border border-[var(--border-color)]/30"
-              aria-label="Toggle sidebar"
-            >
-              <X className="w-5 h-5 text-[var(--secondary-text)] group-hover:text-[var(--primary)] transition-colors duration-300" />
-            </button>
           </div>
 
-          {/* Enhanced Reels List */}
-          <div className="flex-1 overflow-y-auto p-3 md:p-4 scrollbar-thin scrollbar-thumb-purple-500/20 scrollbar-track-transparent">
+          {/* Reels List */}
+          <div style={{ 
+            flex: 1, 
+            overflowY: 'auto', 
+            padding: '0 16px',
+            paddingBottom: 24
+          }}>
             <AnimatePresence>
               {generatingCelebrity && (
                 <motion.div
-                  initial={{ opacity: 0, y: -20, scale: 0.9 }}
-                  animate={{ opacity: 1, y: 0, scale: 1 }}
-                  exit={{ opacity: 0, x: -50, scale: 0.8 }}
-                  className="group relative rounded-2xl bg-gradient-to-br from-[var(--background)]/80 to-[var(--background)]/60 backdrop-blur-sm border-2 border-dashed border-purple-500/50 mb-3 p-4 overflow-hidden"
+                  initial={{ opacity: 0, y: -20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -20 }}
+                  style={{
+                    marginBottom: 12,
+                    padding: 16,
+                    background: 'rgba(255,255,255,0.7)',
+                    border: '2px dashed var(--rose-gold-light)',
+                    borderRadius: 16,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 12
+                  }}
                 >
-                  {/* Animated background */}
-                  <div className="absolute inset-0 bg-gradient-to-r from-purple-500/10 via-pink-500/10 to-blue-500/10 animate-pulse"></div>
-                  <div className="absolute inset-0 bg-gradient-to-br from-transparent via-purple-500/5 to-transparent blur-xl"></div>
-                  
-                  <div className="relative flex items-center gap-4">
-                    <div className="w-14 h-18 flex-shrink-0 bg-gradient-to-br from-purple-900/50 via-pink-900/50 to-blue-900/50 rounded-xl flex items-center justify-center shadow-lg backdrop-blur-sm border border-purple-500/20">
-                      <div className="relative">
-                        <div className="w-7 h-7 border-3 border-purple-400/30 border-t-purple-400 rounded-full animate-spin" />
-                        <Zap className="absolute inset-0 w-7 h-7 text-yellow-400/80 animate-pulse" />
-                      </div>
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <h3 className="font-bold text-[var(--foreground)] truncate text-lg">
-                        ✨ {generatingCelebrity}
-                      </h3>
-                      <p className="text-sm text-purple-400 truncate mt-1 animate-pulse font-medium">
-                        🎬 Crafting magic...
-                      </p>
-                    </div>
+                  <div style={{
+                    width: 48,
+                    height: 64,
+                    background: 'rgba(232,180,160,0.2)',
+                    borderRadius: 12,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}>
+                    <div style={{
+                      width: 24,
+                      height: 24,
+                      border: '2px solid var(--rose-gold-light)',
+                      borderTop: '2px solid var(--rose-gold-dark)',
+                      borderRadius: '50%',
+                      animation: 'spin 1s linear infinite'
+                    }} />
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <h3 style={{ 
+                      fontWeight: 600, 
+                      color: 'var(--dark)', 
+                      fontSize: 16, 
+                      margin: '0 0 4px 0' 
+                    }}>
+                      ✨ {generatingCelebrity}
+                    </h3>
+                    <p style={{ 
+                      fontSize: 12, 
+                      color: 'var(--rose-gold-dark)', 
+                      margin: 0,
+                      fontWeight: 500 
+                    }}>
+                      Creating your reel...
+                    </p>
                   </div>
                 </motion.div>
               )}
 
               {loading ? (
-                <div className="flex flex-col items-center justify-center py-12">
-                  <div className="relative">
-                    <div className="w-12 h-12 border-3 border-purple-500/30 border-t-purple-500 rounded-full animate-spin" />
-                    <div className="absolute inset-0 w-12 h-12 border-3 border-pink-500/20 border-r-pink-500 rounded-full animate-spin animate-reverse" style={{ animationDelay: '0.5s' }} />
-                  </div>
-                  <p className="text-[var(--secondary-text)] mt-4 animate-pulse">Loading your creations...</p>
+                <div style={{ 
+                  display: 'flex', 
+                  flexDirection: 'column', 
+                  alignItems: 'center', 
+                  justifyContent: 'center', 
+                  padding: '48px 0' 
+                }}>
+                  <div style={{
+                    width: 40,
+                    height: 40,
+                    border: '3px solid var(--rose-gold-light)',
+                    borderTop: '3px solid var(--rose-gold-dark)',
+                    borderRadius: '50%',
+                    animation: 'spin 1s linear infinite',
+                    marginBottom: 16
+                  }} />
+                  <p style={{ 
+                    color: 'var(--dark)', 
+                    fontWeight: 500, 
+                    margin: 0 
+                  }}>
+                    Loading your creations...
+                  </p>
                 </div>
               ) : reels.length === 0 ? (
-                <div className="text-center py-12">
-                  <div className="relative mb-6">
-                    <div className="w-20 h-20 mx-auto bg-gradient-to-br from-purple-600/20 via-pink-600/20 to-blue-600/20 rounded-3xl flex items-center justify-center backdrop-blur-sm border border-purple-500/20">
-                      <Sparkles className="w-10 h-10 text-purple-400 animate-pulse" />
-                    </div>
-                    <div className="absolute inset-0 bg-gradient-to-br from-purple-500/10 to-pink-500/10 rounded-3xl blur-xl"></div>
+                <div style={{ 
+                  textAlign: 'center', 
+                  padding: '48px 0' 
+                }}>
+                  <div style={{
+                    width: 60,
+                    height: 60,
+                    margin: '0 auto 16px',
+                    background: 'rgba(232,180,160,0.2)',
+                    borderRadius: 20,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}>
+                    <Sparkles style={{ 
+                      width: 30, 
+                      height: 30, 
+                      color: 'var(--rose-gold-dark)' 
+                    }} />
                   </div>
-                  <h3 className="text-xl font-bold text-[var(--foreground)] mb-2">Ready to Create?</h3>
-                  <p className="text-[var(--secondary-text)] font-medium">Your AI reels will appear here</p>
-                  <div className="mt-4 text-sm text-purple-400">🚀 Start by searching for a celebrity!</div>
+                  <h3 style={{ 
+                    fontSize: 18, 
+                    fontWeight: 600, 
+                    color: 'var(--dark)', 
+                    margin: '0 0 8px 0' 
+                  }}>
+                    Ready to Create?
+                  </h3>
+                  <p style={{ 
+                    color: 'var(--rose-gold-dark)', 
+                    fontWeight: 500, 
+                    margin: '0 0 16px 0',
+                    fontSize: 14
+                  }}>
+                    Your AI reels will appear here
+                  </p>
+                  <div style={{ 
+                    fontSize: 12, 
+                    color: 'var(--dark)',
+                    opacity: 0.8
+                  }}>
+                    🚀 Start by searching for a celebrity!
+                  </div>
                 </div>
               ) : (
                 reels.map((reel, index) => (
                   <motion.div
                     key={reel.id}
-                    layout
-                    initial={{ opacity: 0, y: 20, scale: 0.95 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    exit={{ opacity: 0, x: -50, scale: 0.8, transition: { duration: 0.3 } }}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, x: -50 }}
                     transition={{ delay: index * 0.05 }}
-                    className={`group relative rounded-2xl cursor-pointer transition-all duration-300 mb-3 overflow-visible ${
-                      selectedReelId === reel.id 
-                        ? 'bg-gradient-to-br from-purple-500/25 via-pink-500/20 to-blue-500/25 border-2 border-purple-500/60 shadow-2xl shadow-purple-500/20 scale-[1.02]' 
-                        : 'bg-gradient-to-br from-[var(--background)]/80 to-[var(--background)]/60 hover:from-purple-500/10 hover:to-pink-500/10 border-2 border-transparent hover:border-purple-500/30 backdrop-blur-sm hover:shadow-xl hover:shadow-purple-500/10 hover:scale-[1.01]'
-                    }`}
-                    onClick={() => handleMobileSelect(reel.id)}
+                    onClick={() => onSelect(reel.id)}
+                    style={{
+                      marginBottom: 12,
+                      padding: 16,
+                      background: selectedReelId === reel.id 
+                        ? 'rgba(180, 120, 100, 0.3)' 
+                        : 'rgba(255,255,255,0.7)',
+                      border: selectedReelId === reel.id 
+                        ? '2px solid var(--rose-gold)' 
+                        : '2px solid transparent',
+                      borderRadius: 16,
+                      cursor: 'pointer',
+                      transition: 'all 0.2s ease',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 12,
+                      boxShadow: selectedReelId === reel.id 
+                        ? '0 4px 16px 0 rgba(232,180,160,0.2)' 
+                        : '0 2px 8px 0 rgba(0,0,0,0.05)',
+                    }}
+                    onMouseEnter={(e) => {
+                      if (selectedReelId !== reel.id) {
+                        e.currentTarget.style.background = 'rgba(232,180,160,0.15)';
+                        e.currentTarget.style.transform = 'translateY(-2px)';
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (selectedReelId !== reel.id) {
+                        e.currentTarget.style.background = 'rgba(255,255,255,0.7)';
+                        e.currentTarget.style.transform = 'translateY(0)';
+                      }
+                    }}
                   >
-                    {/* Animated background for selected item */}
-                    {selectedReelId === reel.id && (
-                      <div className="absolute inset-0 bg-gradient-to-r from-purple-500/10 via-pink-500/10 to-blue-500/10 animate-pulse"></div>
+                    {reel.thumbnailUrl ? (
+                      <div style={{ position: 'relative' }}>
+                        <img 
+                          src={reel.thumbnailUrl} 
+                          alt={reel.celebrity} 
+                          style={{ 
+                            width: 48, 
+                            height: 64, 
+                            objectFit: 'cover', 
+                            borderRadius: 12,
+                            border: '1px solid var(--rose-gold-light)'
+                          }}
+                        />
+                      </div>
+                    ) : (
+                      <div style={{
+                        width: 48,
+                        height: 64,
+                        background: 'rgba(232,180,160,0.2)',
+                        borderRadius: 12,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center'
+                      }}>
+                        <Film style={{ 
+                          width: 24, 
+                          height: 24, 
+                          color: 'var(--rose-gold-dark)' 
+                        }} />
+                      </div>
                     )}
                     
-                    <div className="relative flex items-center gap-4 p-4">
-                      {reel.thumbnailUrl ? (
-                        <div className="relative">
-                          <img 
-                            src={reel.thumbnailUrl} 
-                            alt={reel.celebrity} 
-                            className="w-14 h-18 object-cover rounded-xl flex-shrink-0 shadow-lg border-2 border-purple-500/20" 
-                          />
-                          <div className="absolute inset-0 bg-gradient-to-t from-purple-500/20 to-transparent rounded-xl"></div>
-                          <Star className="absolute top-1 right-1 w-4 h-4 text-yellow-400 drop-shadow-lg" />
-                        </div>
-                      ) : (
-                        <div className="w-14 h-18 flex-shrink-0 bg-gradient-to-br from-purple-900/50 via-pink-900/50 to-blue-900/50 rounded-xl flex items-center justify-center shadow-lg backdrop-blur-sm border-2 border-purple-500/20">
-                          <Film className="w-7 h-7 text-purple-400" />
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <h3 style={{ 
+                        fontWeight: 600, 
+                        color: 'var(--dark)', 
+                        fontSize: 16,
+                        margin: '0 0 4px 0',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap'
+                      }}>
+                        {reel.celebrity}
+                      </h3>
+                      <p style={{ 
+                        fontSize: 12, 
+                        color: 'white', 
+                        margin: 0,
+                        fontWeight: 500,
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap'
+                      }}>
+                        {reel.title}
+                      </p>
+                      {selectedReelId === reel.id && (
+                        <div style={{ 
+                          fontSize: 10, 
+                          color: 'black', 
+                          marginTop: 4, 
+                          fontWeight: 600 
+                        }}>
+                          ✨ Currently viewing
                         </div>
                       )}
+                    </div>
+                    
+                    <div style={{ position: 'relative' }} ref={openMenuId === reel.id ? menuRef : undefined}>
+                      <button
+                        style={{ 
+                          padding: 6, 
+                          borderRadius: 8, 
+                          background: 'rgba(232,180,160,0.1)', 
+                          border: 'none',
+                          cursor: 'pointer',
+                          transition: 'all 0.2s ease'
+                        }}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setOpenMenuId(openMenuId === reel.id ? null : reel.id);
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.background = 'rgba(232,180,160,0.2)';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.background = 'rgba(232,180,160,0.1)';
+                        }}
+                        aria-label="More actions"
+                      >
+                        <MoreVertical style={{ 
+                          width: 16, 
+                          height: 16, 
+                          color: 'var(--rose-gold-dark)' 
+                        }} />
+                      </button>
                       
-                      <div className="flex-1 min-w-0">
-                        <h3 className="font-bold text-[var(--foreground)] truncate text-lg group-hover:text-purple-400 transition-colors duration-300">
-                          {reel.celebrity}
-                        </h3>
-                        <p className="text-sm text-[var(--secondary-text)] truncate mt-1 font-medium">
-                          {reel.title}
-                        </p>
-                        {selectedReelId === reel.id && (
-                          <div className="text-xs text-purple-400 mt-1 font-medium">✨ Currently viewing</div>
-                        )}
-                      </div>
-                      
-                      <div className="relative overflow-visible" ref={openMenuId === reel.id ? menuRef : undefined}>
-                        <button
-                          className="p-2 rounded-xl hover:bg-gradient-to-br hover:from-purple-500/20 hover:to-pink-500/20 transition-all duration-300 group border border-transparent hover:border-purple-500/30"
-                          onClick={e => {
-                            e.stopPropagation();
-                            setOpenMenuId(openMenuId === reel.id ? null : reel.id);
-                          }}
-                          aria-label="More actions"
-                        >
-                          <MoreVertical className="w-5 h-5 text-[var(--secondary-text)] group-hover:text-purple-400 transition-colors duration-300" />
-                        </button>
-                        
-                        <AnimatePresence>
-                          {openMenuId === reel.id && (
-                            <motion.div
-                              initial={{ opacity: 0, scale: 0.9, y: -10 }}
-                              animate={{ opacity: 1, scale: 1, y: 0 }}
-                              exit={{ opacity: 0, scale: 0.9, y: -10 }}
-                              className="absolute right-0 top-full mt-2 w-44 bg-[var(--card-background)]/95 backdrop-blur-xl border border-[var(--border-color)]/50 rounded-2xl shadow-2xl z-50 overflow-hidden"
+                      <AnimatePresence>
+                        {openMenuId === reel.id && (
+                          <motion.div
+                            initial={{ opacity: 0, scale: 0.9 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            exit={{ opacity: 0, scale: 0.9 }}
+                            style={{ 
+                              position: 'absolute', 
+                              right: 0, 
+                              top: '100%', 
+                              marginTop: 4, 
+                              width: 140, 
+                              background: 'rgba(255,255,255,0.95)', 
+                              border: '1px solid var(--rose-gold-light)', 
+                              borderRadius: 12, 
+                              boxShadow: '0 8px 24px 0 rgba(0,0,0,0.15)', 
+                              zIndex: 100,
+                              overflow: 'hidden'
+                            }}
+                          >
+                            <button
+                              style={{ 
+                                width: '100%', 
+                                display: 'flex', 
+                                alignItems: 'center', 
+                                gap: 8, 
+                                padding: '10px 12px', 
+                                background: 'none', 
+                                border: 'none', 
+                                color: 'var(--dark)', 
+                                fontWeight: 500, 
+                                fontSize: 14, 
+                                cursor: 'pointer',
+                                transition: 'background 0.2s'
+                              }}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                onDelete(reel.id);
+                                setOpenMenuId(null);
+                              }}
+                              onMouseEnter={(e) => {
+                                e.currentTarget.style.background = 'rgba(232,180,160,0.1)';
+                              }}
+                              onMouseLeave={(e) => {
+                                e.currentTarget.style.background = 'none';
+                              }}
                             >
-                              <div className="absolute inset-0 bg-gradient-to-br from-red-500/5 to-red-600/5"></div>
-                              <button
-                                className="relative w-full flex items-center gap-3 px-4 py-3 text-left text-white-400 hover:bg-red-500/10 hover:text-red-300 transition-all duration-300 font-medium"
-                                onClick={e => {
-                                  e.stopPropagation();
-                                  onDelete(reel.id);
-                                  setOpenMenuId(null);
-                                }}
-                              >
-                                <Trash2 className="w-4 h-4" />
-                                Delete Reel
-                              </button>
-                            </motion.div>
-                          )}
-                        </AnimatePresence>
-                      </div>
+                              <Trash2 style={{ 
+                                width: 14, 
+                                height: 14, 
+                                color: 'var(--rose-gold-dark)' 
+                              }} />
+                              Delete Reel
+                            </button>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
                     </div>
                   </motion.div>
                 ))
@@ -290,7 +513,15 @@ const Sidebar: React.FC<SidebarProps> = ({
             </AnimatePresence>
           </div>
         </div>
-      </aside>
+
+        {/* Add the spin animation styles */}
+        <style>{`
+          @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+          }
+        `}</style>
+      </motion.aside>
     </>
   );
 };
