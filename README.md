@@ -5,7 +5,7 @@
 ### Base URL
 
 - **Local:** `http://localhost:3000/api`
-- **Production:** `(https://aireel-sepia.vercel.app/)`
+- **Production:** `https://aireel-sepia.vercel.app/`
 
 ---
 
