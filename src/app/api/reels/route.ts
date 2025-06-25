@@ -1,14 +1,26 @@
 import { NextResponse } from 'next/server';
-import fs from 'fs';
-import path from 'path';
-
-const reelsJsonPath = path.join(process.cwd(), 'src', 'app', 'api', 'reels', 'reels.json');
+import { supabase } from '@/utils/supabase';
 
 export async function GET() {
-  try {
-    const reels = JSON.parse(fs.readFileSync(reelsJsonPath, 'utf-8'));
-    return NextResponse.json({ reels });
-  } catch (error) {
+  const { data: reels, error } = await supabase
+    .from('reels')
+    .select('*')
+    .order('created_at', { ascending: false });
+
+  if (error) {
     return NextResponse.json({ reels: [], error: 'Failed to load reels.' }, { status: 500 });
   }
+
+  // Map DB fields to frontend fields if needed
+  const mappedReels = (reels || []).map(r => ({
+    id: r.id,
+    title: r.title,
+    celebrity: r.celebrity,
+    videoUrl: r.video_url,
+    thumbnailUrl: r.thumbnail_url,
+    script: r.script,
+    createdAt: r.created_at,
+  }));
+
+  return NextResponse.json({ reels: mappedReels });
 }
