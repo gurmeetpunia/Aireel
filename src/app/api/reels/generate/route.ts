@@ -5,6 +5,23 @@ import { fetchCelebrityImage } from '@/utils/unsplash';
 import { supabase, uploadAudioToSupabase } from '@/utils/supabase';
 import axios from 'axios';
 
+async function pollShotstackStatus(renderId: string, maxAttempts = 20, intervalMs = 5000): Promise<string> {
+  let attempts = 0;
+  while (attempts < maxAttempts) {
+    const statusRes = await axios.get(`${process.env.NEXT_PUBLIC_BASE_URL || ''}/api/reels/shotstack-status?renderId=${renderId}`);
+    const statusData = statusRes.data;
+    if (statusData.status === 'done' && statusData.url) {
+      return statusData.url;
+    }
+    if (statusData.status === 'failed') {
+      throw new Error('Shotstack render failed');
+    }
+    await new Promise(res => setTimeout(res, intervalMs));
+    attempts++;
+  }
+  throw new Error('Shotstack render timed out');
+}
+
 export async function POST(request: Request) {
   try {
     const { celebrity } = await request.json();
@@ -23,15 +40,20 @@ export async function POST(request: Request) {
     if (!imageUrl) {
       return NextResponse.json({ error: 'No image found for the celebrity.' }, { status: 404 });
     }
-    // 4. Assemble video using local API (pass audioUrl as a public URL)
-    const assembleUrl = process.env.ASSEMBLE_API_URL || 'http://localhost:3000/api/reels/assemble';
-    const assembleRes = await axios.post(
-      assembleUrl,
-      { imageUrl, audioUrl, duration: 15 }, // duration is hardcoded, adjust if needed
-      { responseType: 'json' }
-    );
-    const { videoUrl, id } = assembleRes.data;
-    // 5. Save metadata to Supabase 'reels' table
+    // 4. Assemble video using Shotstack
+    const shotstackRes = await axios.post(`${process.env.NEXT_PUBLIC_BASE_URL || ''}/api/reels/shotstack-assemble`, {
+      imageUrl,
+      audioUrl,
+      duration: 15
+    });
+    const { renderId } = shotstackRes.data;
+    if (!renderId) {
+      return NextResponse.json({ error: 'Failed to start Shotstack render.' }, { status: 500 });
+    }
+    // 5. Poll for video completion
+    const videoUrl = await pollShotstackStatus(renderId);
+    const id = renderId;
+    // 6. Save metadata to Supabase 'reels' table
     const { error: dbError } = await supabase.from('reels').insert([
       {
         id,
