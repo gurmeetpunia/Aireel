@@ -226,6 +226,40 @@ const Home: React.FC = () => {
 
             {/* Main content */}
             <main>
+                {/* Error Banner */}
+                {error && (
+                    <div style={{
+                        background: 'rgba(255, 0, 0, 0.1)',
+                        color: '#b91c1c',
+                        border: '1px solid #fca5a5',
+                        borderRadius: 8,
+                        padding: '12px 20px',
+                        margin: '20px auto',
+                        maxWidth: 600,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        fontWeight: 500,
+                        zIndex: 1000,
+                    }}>
+                        <span>{error}</span>
+                        <button
+                            onClick={() => setError(null)}
+                            style={{
+                                background: 'none',
+                                border: 'none',
+                                color: '#b91c1c',
+                                fontWeight: 'bold',
+                                fontSize: 18,
+                                cursor: 'pointer',
+                                marginLeft: 16,
+                            }}
+                            aria-label="Close error message"
+                        >
+                            ×
+                        </button>
+                    </div>
+                )}
                 {/* Hero and generator */}
                 <section className="hero" id="home">
                     <div className="container">

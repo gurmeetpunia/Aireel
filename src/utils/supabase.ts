@@ -25,3 +25,22 @@ export async function uploadVideoToSupabase(buffer: Buffer, ext = 'mp4') {
     publicUrl: publicUrlData?.publicUrl,
   };
 }
+
+export async function uploadAudioToSupabase(buffer: Buffer, ext = 'mp3') {
+  const id = uuidv4();
+  const filePath = `${id}.${ext}`;
+  const { data, error } = await supabase.storage
+    .from(supabaseBucket)
+    .upload(filePath, buffer, {
+      contentType: 'audio/mpeg',
+      upsert: false,
+    });
+  if (error) throw error;
+  // Get public URL
+  const { data: publicUrlData } = supabase.storage.from(supabaseBucket).getPublicUrl(filePath);
+  return {
+    id,
+    filePath,
+    publicUrl: publicUrlData?.publicUrl,
+  };
+}

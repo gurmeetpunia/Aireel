@@ -2,13 +2,8 @@ import { NextResponse } from 'next/server';
 import { generateCelebrityScriptCohere } from '@/utils/cohere';
 import { generateSpeechElevenLabs } from '@/utils/elevenlabs';
 import { fetchCelebrityImage } from '@/utils/unsplash';
-import { getAudioDuration } from '@/utils/videoAssembler';
-import fs from 'fs';
-import tmp from 'tmp';
+import { supabase, uploadAudioToSupabase } from '@/utils/supabase';
 import axios from 'axios';
-import path from 'path';
-
-const reelsJsonPath = path.join(process.cwd(), 'src', 'app', 'api', 'reels', 'reels.json');
 
 export async function POST(request: Request) {
   try {
@@ -20,27 +15,38 @@ export async function POST(request: Request) {
     const script = await generateCelebrityScriptCohere(celebrity);
     // 2. Generate audio
     const audioBuffer = await generateSpeechElevenLabs(script);
-    const audioTmp = tmp.fileSync({ postfix: '.mp3' });
-    fs.writeFileSync(audioTmp.name, audioBuffer);
-    const audioPath = audioTmp.name;
-    // 2.5 Get audio duration
-    const audioDuration = await getAudioDuration(audioPath);
+    // 2.1 Upload audio to Supabase Storage
+    const audioUpload = await uploadAudioToSupabase(audioBuffer, 'mp3');
+    const audioUrl = audioUpload.publicUrl;
     // 3. Fetch image
     const imageUrl = await fetchCelebrityImage(celebrity);
     if (!imageUrl) {
       return NextResponse.json({ error: 'No image found for the celebrity.' }, { status: 404 });
     }
-    // 4. Assemble video using local API
+    // 4. Assemble video using local API (pass audioUrl as a public URL)
     const assembleUrl = process.env.ASSEMBLE_API_URL || 'http://localhost:3000/api/reels/assemble';
     const assembleRes = await axios.post(
       assembleUrl,
-      { imageUrl, audioUrl: audioPath, duration: audioDuration },
+      { imageUrl, audioUrl, duration: 15 }, // duration is hardcoded, adjust if needed
       { responseType: 'json' }
     );
     const { videoUrl, id } = assembleRes.data;
-    // Clean up temp audio file
-    audioTmp.removeCallback();
-    // 5. Save metadata to reels.json
+    // 5. Save metadata to Supabase 'reels' table
+    const { error: dbError } = await supabase.from('reels').insert([
+      {
+        id,
+        title: `${celebrity} - AI History Reel`,
+        celebrity,
+        video_url: videoUrl,
+        thumbnail_url: imageUrl,
+        script,
+        created_at: new Date().toISOString(),
+      },
+    ]);
+    if (dbError) {
+      console.error('Supabase DB Insert Error:', dbError);
+      return NextResponse.json({ error: 'Failed to save reel metadata.' }, { status: 500 });
+    }
     const reel = {
       id,
       title: `${celebrity} - AI History Reel`,
@@ -48,14 +54,8 @@ export async function POST(request: Request) {
       videoUrl,
       thumbnailUrl: imageUrl,
       script,
-      createdAt: new Date().toISOString()
+      createdAt: new Date().toISOString(),
     };
-    let reels = [];
-    try {
-      reels = JSON.parse(fs.readFileSync(reelsJsonPath, 'utf-8'));
-    } catch {}
-    reels.unshift(reel); // add to start
-    fs.writeFileSync(reelsJsonPath, JSON.stringify(reels, null, 2));
     return NextResponse.json(reel);
   } catch (error) {
     console.error('AI Reel Generation Error:', error);
