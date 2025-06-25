@@ -51,7 +51,7 @@ export async function POST(request: Request) {
       duration: 15
     });
     console.log('Shotstack response:', shotstackRes.data);
-    const { renderId } = shotstackRes.data;
+    const renderId = shotstackRes.data?.response?.id;
     console.log('Render ID:', renderId);
     if (!renderId) {
       return NextResponse.json({ error: 'Failed to start Shotstack render.' }, { status: 500 });
