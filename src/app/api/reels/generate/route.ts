@@ -11,10 +11,10 @@ async function pollShotstackStatus(renderId: string, maxAttempts = 40, intervalM
     const statusRes = await axios.get(`${process.env.NEXT_PUBLIC_BASE_URL || ''}/api/reels/shotstack-status?renderId=${renderId}`);
     const statusData = statusRes.data;
     console.log(`Polling Shotstack: attempt ${attempts + 1}, status:`, statusData);
-    if (statusData.status === 'done' && statusData.url) {
-      return statusData.url;
+    if (statusData.response.status === 'done' && statusData.response.url) {
+      return statusData.response.url;
     }
-    if (statusData.status === 'failed') {
+    if (statusData.response.status === 'failed') {
       console.error('Shotstack render failed:', statusData);
       throw new Error('Shotstack render failed');
     }
