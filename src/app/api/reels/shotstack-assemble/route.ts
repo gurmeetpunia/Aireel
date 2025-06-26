@@ -7,8 +7,8 @@ export async function POST(request: Request) {
     if (!imageUrl || !audioUrl) {
       return NextResponse.json({ error: 'imageUrl and audioUrl are required.' }, { status: 400 });
     }
-    const renderId = await assembleVideoShotstack({ imageUrls: [imageUrl], audioUrl, duration });
-    return NextResponse.json({ renderId });
+    const shotstackResponse = await assembleVideoShotstack({ imageUrls: [imageUrl], audioUrl, duration });
+    return NextResponse.json(shotstackResponse);
   } catch (error) {
     console.error('Shotstack Assemble Error:', error);
     return NextResponse.json({ error: 'Failed to start Shotstack render.' }, { status: 500 });

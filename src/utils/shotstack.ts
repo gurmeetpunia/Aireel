@@ -72,7 +72,7 @@ export async function assembleVideoShotstack({
       },
     });
     console.log('Shotstack full response:', response.data);
-    return response.data.id; // renderId
+    return response.data; // full Shotstack response
   } catch (error: any) {
     if (error.response) {
       console.error('Shotstack API Error:', error.response.data);
